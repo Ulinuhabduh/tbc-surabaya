@@ -1,0 +1,9 @@
+geopandas==1.0.1
+numpy==2.2.5
+pandas==2.2.3
+openpyxl==3.1.5
+folium==0.19.5
+streamlit==1.45.0
+streamlit_folium==0.25.0
+seaborn==0.13.2
+scikit-learn==1.6.1

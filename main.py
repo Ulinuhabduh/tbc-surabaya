@@ -73,8 +73,11 @@ with tabs[0]:
         legend_name=f"Prediksi TBC ({choropleth_model})"
     ).add_to(m1)
 
-    tooltip = GeoJsonTooltip(fields=["NAMOBJ"], aliases=["Kecamatan:"])
-    folium.GeoJson(gdf_choro, tooltip=tooltip, style_function=lambda x: {'fillOpacity': 0, 'color': 'black', 'weight': 0.3}).add_to(m1)
+    tooltip = GeoJsonTooltip(
+        fields=["NAMOBJ", choropleth_model], 
+        aliases=["Kecamatan:", "Prediksi:"], 
+        localize=True, sticky=False, labels=True, style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"))
+    folium.GeoJson(gdf_choro, tooltip=tooltip, style_function=lambda x: {'fillOpacity': 0, 'color': 'black', 'weigt': 0.3}).add_to(m1)
     folium.LayerControl(collapsed=False).add_to(m1)
 
     # Peta Heatmap

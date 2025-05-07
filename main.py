@@ -99,11 +99,11 @@ with tabs[0]:
     with st.container():
         with col1:
             st.subheader("🟡 Peta Choropleth TBC per Kecamatan")
-            st_folium(m1, width=500, height=400)
+            st_folium(m1, width=750, height=600)
 
         with col2:
             st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
-            st_folium(m2, width=500, height=400)
+            st_folium(m2, width=750, height=600)
 
 # ================================
 # Tab 2: Statistik

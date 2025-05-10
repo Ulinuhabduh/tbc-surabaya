@@ -38,7 +38,7 @@ df = pd.read_excel("Statistik/Hasil_Prediksi_TBC_Lengkap.xlsx")
 # ================================
 gdf_proj = gdf_choro.to_crs(epsg=32748)
 centroid = gdf_proj.geometry.centroid.to_crs(epsg=4326)
-center = [centroid.y.mean(), centroid.x.mean()]
+center = [centroid.y.mean(), centroid.x.mean() + 10]
 
 # ================================
 # Dropdown Choropleth
@@ -55,55 +55,93 @@ tabs = st.tabs(["🗺️ Peta Interaktif", "📊 Statistik Model", "📋 Data Le
 # Tab 1: Peta Interaktif
 # ================================
 with tabs[0]:
-    choropleth_model = st.selectbox("Model Prediksi untuk Choropleth:", choropleth_fields)
+    def map1(choropleth_model):
 
-    # Peta Choropleth
-    m1 = folium.Map(location=center, zoom_start=11, tiles=None)
-    TileLayer('CartoDB positron', name='Base').add_to(m1)
-    TileLayer('Esri.WorldImagery', name='Citra Satelit').add_to(m1)
+        st.markdown("""
+        <style>
+        .leaflet-control.colorbar {
+            right: 10px !important;
+            bottom: 10px !important;
+            top: auto !important;
+            transform: scale(0.85);  /* opsional: perkecil di mobile */
+        }
 
-    Choropleth(
-        geo_data=gdf_choro,
-        data=gdf_choro,
-        columns=["NAMOBJ", choropleth_model],
-        key_on="feature.properties.NAMOBJ",
-        fill_color="RdYlGn_r",
-        fill_opacity=0.7,
-        line_opacity=0.3,
-        legend_name=f"Prediksi TBC ({choropleth_model})"
-    ).add_to(m1)
+        @media (max-width: 768px) {
+            .leaflet-control.colorbar {
+                right: 5px !important;
+                bottom: 5px !important;
+                transform: scale(0.7);  /* lebih kecil lagi untuk layar kecil */
+            }
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    tooltip = GeoJsonTooltip(
-        fields=["NAMOBJ", choropleth_model], 
-        aliases=["Kecamatan:", "Prediksi:"], 
-        localize=True, sticky=False, labels=True, style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"))
-    folium.GeoJson(gdf_choro, tooltip=tooltip, style_function=lambda x: {'fillOpacity': 0, 'color': 'black', 'weigt': 0.3}).add_to(m1)
-    folium.LayerControl(collapsed=False).add_to(m1)
+        # Buat peta
+        m1 = folium.Map(location=center, zoom_start=10, tiles="Esri.WorldImagery")
+        # Tambahkan choropleth langsung ke peta
+        Choropleth(
+            geo_data=gdf_choro,
+            data=gdf_choro,
+            columns=["NAMOBJ", choropleth_model],
+            key_on="feature.properties.NAMOBJ",
+            fill_color="RdYlGn_r",
+            fill_opacity=0.7,
+            line_opacity=0.3,
+            legend_name=choropleth_model
+        ).add_to(m1)
 
-    # Peta Heatmap
-    m2 = folium.Map(location=center, zoom_start=11, tiles="Esri.WorldImagery")
-    for field in heatmap_fields:
-        heat_data = [
-            [point.y, point.x, weight]
-            for point, weight in zip(gdf_heat.geometry, gdf_heat[field])
-            if not pd.isna(weight)
-        ]
-        fg = folium.FeatureGroup(name=f"Heatmap: {field}", show=False)
-        HeatMap(heat_data, radius=25, blur=15, max_zoom=13).add_to(fg)
-        fg.add_to(m2)
+        # Hapus legend HTML macro
+        if hasattr(m1.get_root(), 'html'):
+            m1.get_root().html.render = lambda **kwargs: ''
 
-    folium.LayerControl(collapsed=False).add_to(m2)
+        # Tooltip tetap pakai GeoJson
+        tooltip = GeoJsonTooltip(
+            fields=["NAMOBJ", choropleth_model],
+            aliases=["Kecamatan:", "Prediksi:"],
+            localize=True,
+            sticky=False,
+            labels=True,
+            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;")
+        )
+
+        # Tambahkan GeoJson untuk tooltip saja
+        folium.GeoJson(
+            gdf_choro,
+            tooltip=tooltip,
+            style_function=lambda x: {'fillOpacity': 0, 'color': 'black', 'weight': 0.3}
+        ).add_to(m1)
+        # Kontrol layer
+
+        return m1
+
+    def map2(heatmap_model):
+        # Peta Heatmap dengan satu layer aktif
+        m2 = folium.Map(location=center, zoom_start=10, tiles="Esri.WorldImagery")
+
+        for field in heatmap_fields:
+            heat_data = [
+                [point.y, point.x, weight]
+                for point, weight in zip(gdf_heat.geometry, gdf_heat[field])
+                if not pd.isna(weight)
+            ]
+            fg = folium.FeatureGroup(name=f"Heatmap: {field}", show=(field == heatmap_model))
+            HeatMap(heat_data, radius=25, blur=15, max_zoom=13).add_to(fg)
+            fg.add_to(m2)
+
+        return m2
 
     col1, col2 = st.columns(2)
-
     with st.container():
         with col1:
             st.subheader("🟡 Peta Choropleth TBC per Kecamatan")
-            st_folium(m1, width=750, height=600)
+            choropleth_model = st.selectbox("Model Prediksi untuk Choropleth:", choropleth_fields)
+            st_folium(map1(choropleth_model), width=750, height=600)
 
         with col2:
             st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
-            st_folium(m2, width=750, height=600)
+            heatmap_model = st.selectbox("Model Prediksi untuk Heatmap:", heatmap_fields)
+            st_folium(map2(heatmap_model), width=750, height=600)
+
 
 # ================================
 # Tab 2: Statistik

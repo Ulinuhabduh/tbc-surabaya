@@ -11,6 +11,7 @@ from streamlit_folium import st_folium
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
+from branca.colormap import LinearColormap, linear
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
@@ -38,7 +39,7 @@ df = pd.read_excel("Statistik/Hasil_Prediksi_TBC_Lengkap.xlsx")
 # ================================
 gdf_proj = gdf_choro.to_crs(epsg=32748)
 centroid = gdf_proj.geometry.centroid.to_crs(epsg=4326)
-center = [centroid.y.mean(), centroid.x.mean() + 10]
+center = [centroid.y.mean(), centroid.x.mean() + 0.3]
 
 # ================================
 # Dropdown Choropleth
@@ -55,64 +56,43 @@ tabs = st.tabs(["🗺️ Peta Interaktif", "📊 Statistik Model", "📋 Data Le
 # Tab 1: Peta Interaktif
 # ================================
 with tabs[0]:
+
     def map1(choropleth_model):
+        values = gdf_choro[choropleth_model]
+        vmin, vmax = values.min(), values.max()
+        
+        # Buat colormap custom
+        colors = list(linear.RdYlGn_09.colors)[::-1]  # Membalik urutan warna
+        colormap = LinearColormap(colors, vmin=vmin, vmax=vmax).to_step(10)
+        colormap.caption = f"Prediksi TBC ({choropleth_model})"
 
-        st.markdown("""
-        <style>
-        .leaflet-control.colorbar {
-            right: 10px !important;
-            bottom: 10px !important;
-            top: auto !important;
-            transform: scale(0.85);  /* opsional: perkecil di mobile */
-        }
-
-        @media (max-width: 768px) {
-            .leaflet-control.colorbar {
-                right: 5px !important;
-                bottom: 5px !important;
-                transform: scale(0.7);  /* lebih kecil lagi untuk layar kecil */
-            }
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-        # Buat peta
+        # Inisialisasi peta
         m1 = folium.Map(location=center, zoom_start=10, tiles="Esri.WorldImagery")
-        # Tambahkan choropleth langsung ke peta
-        Choropleth(
-            geo_data=gdf_choro,
-            data=gdf_choro,
-            columns=["NAMOBJ", choropleth_model],
-            key_on="feature.properties.NAMOBJ",
-            fill_color="RdYlGn_r",
-            fill_opacity=0.7,
-            line_opacity=0.3,
-            legend_name=choropleth_model
-        ).add_to(m1)
 
-        # Hapus legend HTML macro
-        if hasattr(m1.get_root(), 'html'):
-            m1.get_root().html.render = lambda **kwargs: ''
+        # Tambahkan GeoJson dengan style berdasarkan nilai prediksi
+        def style_function(feature):
+            kecamatan = feature["properties"]["NAMOBJ"]
+            value = gdf_choro.loc[gdf_choro["NAMOBJ"] == kecamatan, choropleth_model].values[0]
+            return {
+                "fillColor": colormap(value) if not pd.isna(value) else "#gray",
+                "color": "black",
+                "weight": 0.5,
+                "fillOpacity": 0.7,
+            }
 
-        # Tooltip tetap pakai GeoJson
-        tooltip = GeoJsonTooltip(
-            fields=["NAMOBJ", choropleth_model],
-            aliases=["Kecamatan:", "Prediksi:"],
-            localize=True,
-            sticky=False,
-            labels=True,
-            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;")
-        )
-
-        # Tambahkan GeoJson untuk tooltip saja
         folium.GeoJson(
             gdf_choro,
-            tooltip=tooltip,
-            style_function=lambda x: {'fillOpacity': 0, 'color': 'black', 'weight': 0.3}
+            style_function=style_function,
+            tooltip=folium.GeoJsonTooltip(
+                fields=["NAMOBJ", choropleth_model],
+                aliases=["Kecamatan:", "Prediksi:"],
+                localize=True,
+                sticky=True,
+                labels=True,
+            ),
         ).add_to(m1)
-        # Kontrol layer
-
         return m1
+
 
     def map2(heatmap_model):
         # Peta Heatmap dengan satu layer aktif
@@ -133,10 +113,31 @@ with tabs[0]:
     col1, col2 = st.columns(2)
     with st.container():
         with col1:
-            st.subheader("🟡 Peta Choropleth TBC per Kecamatan")
-            choropleth_model = st.selectbox("Model Prediksi untuk Choropleth:", choropleth_fields)
-            st_folium(map1(choropleth_model), width=750, height=600)
+            col_map1, col_map2 = st.columns([5,1])
+            with col_map1:
+                st.subheader("🟡 Peta Choropleth TBC per Kecamatan")
+                choropleth_model = st.selectbox("Model Prediksi untuk Choropleth:", choropleth_fields)
+                st_folium(map1(choropleth_model), width=750, height=600)
+            with col_map2:
+                values = gdf_choro[choropleth_model]
+                vmin, vmax = values.min(), values.max()
+                
+                # Buat colormap custom
+                colors = list(linear.RdYlGn_09.colors)[::-1]  # Membalik urutan warna
+                colormap = LinearColormap(colors, vmin=vmin, vmax=vmax).to_step(10)
+                colormap.caption = f"Prediksi TBC ({choropleth_model})"
 
+                # Render sebagai HTML
+                colormap_html = colormap._repr_html_()
+
+                st.markdown(
+                    f"""
+                    <div style='margin-top: 200px; margin-left: -30px; transform: rotate(90deg); transform-origin: left top;'>
+                        {colormap_html}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
         with col2:
             st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
             heatmap_model = st.selectbox("Model Prediksi untuk Heatmap:", heatmap_fields)

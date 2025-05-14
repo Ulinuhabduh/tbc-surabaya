@@ -93,7 +93,6 @@ with tabs[0]:
         ).add_to(m1)
         return m1
 
-
     def map2(heatmap_model):
         # Peta Heatmap dengan satu layer aktif
         m2 = folium.Map(location=center, zoom_start=10, tiles="Esri.WorldImagery")
@@ -107,6 +106,25 @@ with tabs[0]:
             fg = folium.FeatureGroup(name=f"Heatmap: {field}", show=(field == heatmap_model))
             HeatMap(heat_data, radius=25, blur=15, max_zoom=13).add_to(fg)
             fg.add_to(m2)
+
+        # Tambahkan batas administrasi tanpa warna (hanya outline)
+        folium.GeoJson(
+            gdf_choro,
+            style_function=lambda feature: {
+                "fillColor": "#ffffff",  # Warna putih transparan agar tooltip bisa dihover dari area
+                "color": "black",        # Garis batas
+                "weight": 1,
+                "fillOpacity": 0.01      # Sangat transparan tapi masih bisa di-hover
+            },
+            tooltip=folium.GeoJsonTooltip(
+                fields=["NAMOBJ"],
+                aliases=["Kecamatan:"],
+                localize=True,
+                sticky=True,
+                labels=True,
+            )
+        ).add_to(m2)
+
 
         return m2
 

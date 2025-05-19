@@ -27,9 +27,6 @@ with logo:
 with title:
     st.title("Dashboard Peta Interaktif Prediksi Persebaran Penyakit TBC Kota Surabaya Tahun 2024")
 
-# ================================
-# Load Data
-# ================================
 gdf_choro = gpd.read_file("Choroplet/Distribusi_Penyebaran_TBC_Tahun 2024.shp")
 if gdf_choro.crs is None:
     gdf_choro.set_crs(epsg=4326, inplace=True)

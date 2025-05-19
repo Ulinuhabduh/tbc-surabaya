@@ -225,7 +225,7 @@ with tabs[0]:
                 )
 
         with col2:
-            col2_map, col2_legend = st.columns([5, 1])
+            col2_map, _ = st.columns([5, 1])
 
             with col2_map:
                 st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
@@ -235,7 +235,7 @@ with tabs[0]:
 
                 st_folium(map2(heatmap_model), width=750, height=600)
 
-            with col2_legend:
+            with _:
                 # Ambil nilai aktual
                 values = pd.to_numeric(gdf_heat[heatmap_model], errors='coerce')
                 vmin, vmax = values.min(), values.max()

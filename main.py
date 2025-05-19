@@ -112,7 +112,7 @@ with tabs[0]:
 
         return m1, colormap
 
-    def map2(heatmap_model, gradient):
+    def map2(heatmap_model):
         m2 = folium.Map(location=center, zoom_start=10, tiles="Esri.WorldImagery")
 
         # Tambahkan heatmap layer
@@ -225,44 +225,46 @@ with tabs[0]:
                 )
 
         with col2:
-                col2_map, col2_legend = st.columns([5, 1])
-                with col2_map:
-                    st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
-                    heatmap_options = list(model_label_map_heatmap.keys())
-                    heatmap_label = st.selectbox("Model Prediksi untuk Heatmap:", heatmap_options)
-                    heatmap_model = model_label_map_heatmap[heatmap_label]
+            col2_map, col2_legend = st.columns([5, 1])
 
-                    # Definisikan gradient default HeatMap (folium)
-                    gradient = {
-                        0.0: 'blue',
-                        0.2: 'cyan',
-                        0.4: 'lime',
-                        0.6: 'yellow',
-                        0.8: 'orange',
-                        1.0: 'red'
-                    }
+            with col2_map:
+                st.subheader("🟡 Peta Heatmap TBC per Kecamatan")
+                heatmap_options = list(model_label_map_heatmap.keys())
+                heatmap_label = st.selectbox("Model Prediksi untuk Heatmap:", heatmap_options)
+                heatmap_model = model_label_map_heatmap[heatmap_label]
 
-                    # Panggil map2 dengan gradient
-                    st_folium(map2(heatmap_model, gradient), width=750, height=600)
+                st_folium(map2(heatmap_model), width=750, height=600)
 
-                with col2_legend:
-                    # Tampilkan colormap yang cocok dengan gradient di atas
-                    from branca.colormap import StepColormap
-                    colormap = StepColormap(
-                        colors=['blue', 'cyan', 'lime', 'yellow', 'orange', 'red'],
-                        index=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
-                        vmin=0, vmax=1,
-                        caption=f"Heatmap TBC : ({heatmap_model})"
-                    )
-                    colormap_html = colormap._repr_html_()
-                    st.markdown(
-                        f"""
-                        <div style='margin-top: 200px; margin-left: -30px; transform: rotate(90deg); transform-origin: left top;'>
-                            {colormap_html}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+            with col2_legend:
+                # Ambil nilai aktual
+                values = pd.to_numeric(gdf_heat[heatmap_model], errors='coerce')
+                vmin, vmax = values.min(), values.max()
+
+                # Buat 6 level threshold otomatis dari vmin ke vmax
+                step = (vmax - vmin) / 5
+                index = [vmin + i * step for i in range(6)]
+
+                # Definisikan warna gradient HeatMap (default folium)
+                colors = ['blue', 'cyan', 'lime', 'yellow', 'orange', 'red']
+
+                from branca.colormap import StepColormap
+                colormap = StepColormap(
+                    colors=colors,
+                    index=index,
+                    vmin=vmin,
+                    vmax=vmax,
+                    caption=f"Heatmap TBC : ({heatmap_model})"
+                )
+                colormap_html = colormap._repr_html_()
+                st.markdown(
+                    f"""
+                    <div style='margin-top: 200px; margin-left: -30px; transform: rotate(90deg); transform-origin: left top;'>
+                        {colormap_html}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
 
 
 # ================================

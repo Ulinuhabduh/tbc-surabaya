@@ -265,65 +265,6 @@ with tabs[0]:
                     unsafe_allow_html=True
                 )
 
-
-
-# ================================
-# Tab 2: Statistik
-# ================================
-# with tabs[1]:
-    # def model_metrics(y_true, y_pred):
-    #     return {
-    #         "MAE": mean_absolute_error(y_true, y_pred),
-    #         "RMSE": np.sqrt(mean_squared_error(y_true, y_pred)),
-    #         "R2 Score": r2_score(y_true, y_pred)
-    #     }
-
-    # models = ["NB", "RF", "XGB"]
-    # metrics = {model: model_metrics(df["Actual"], df[f"{model}_Pred"]) for model in models}
-
-    # st.markdown("### 📈 Akurasi Model")
-    # metrics_df = pd.DataFrame(metrics).T.rename(index={"NB": "Negative Binomial", "RF": "Random Forest", "XGB": "XGBoost"})
-    # col1, col2, col3 = st.columns(3)
-    # col1.metric("📉 MAE Terendah", metrics_df["MAE"].idxmin(), f"{metrics_df['MAE'].min():.2f}")
-    # col2.metric("🔁 RMSE Terendah", metrics_df["RMSE"].idxmin(), f"{metrics_df['RMSE'].min():.2f}")
-    # col3.metric("📈 R² Tertinggi", metrics_df["R2 Score"].idxmax(), f"{metrics_df['R2 Score'].max():.2f}")
-
-    # with st.expander("🔍 Lihat Tabel Evaluasi Lengkap"):
-    #     st.dataframe(metrics_df.style.format("{:.2f}"))
-
-    # # Visualisasi per kecamatan
-    # st.markdown("### 📊 Visualisasi Nilai Aktual vs Prediksi per Kecamatan")
-
-    # col1, col2, col3 = st.columns(3)
-    # model_names = {"NB": "Negative Binomial", "RF": "Random Forest", "XGB": "XGBoost"}
-    # colors = {"Actual": "#6A5ACD", "Pred": "#00BFFF"}
-
-    # for model, col in zip(model_names.keys(), [col1, col2, col3]):
-    #     fig, ax = plt.subplots(figsize=(4.5, 4))
-
-    #     # Siapkan DataFrame panjang (long format) untuk seaborn
-    #     df_long = pd.DataFrame({
-    #         "Kecamatan": list(df["Kecamatan"]) * 2,
-    #         "Tipe": ["Aktual"] * len(df) + ["Prediksi"] * len(df),
-    #         "Jumlah Kasus": list(df["Actual"]) + list(df[f"{model}_Pred"])
-    #     })
-
-    #     sns.barplot(
-    #         data=df_long,
-    #         x="Kecamatan",
-    #         y="Jumlah Kasus",
-    #         hue="Tipe",
-    #         palette={"Aktual": colors["Actual"], "Prediksi": colors["Pred"]},
-    #         ax=ax
-    #     )
-
-    #     ax.set_title(f"{model_names[model]}", fontsize=12)
-    #     ax.tick_params(axis='x', rotation=90, labelsize=7)
-    #     ax.set_xlabel("")
-    #     ax.set_ylabel("Jumlah Kasus TBC")
-    #     ax.legend(title="")
-    #     col.pyplot(fig)
-
 # ================================
 # Tab 3: Data Lengkap
 # ================================
